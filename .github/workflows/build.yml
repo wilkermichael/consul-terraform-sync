@@ -206,7 +206,6 @@ jobs:
 
 
       - uses: actions/upload-artifact@v2
-        if: ${{ matrix.goarm == 5 }}
         with:
           name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ env.FILE_SUFFIX }}.zip
           path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ env.FILE_SUFFIX }}.zip
