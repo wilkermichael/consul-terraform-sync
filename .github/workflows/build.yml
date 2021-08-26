@@ -152,60 +152,6 @@ jobs:
           name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_docker_linux_${{ matrix.goarch }}.tar
           path: packaging/docker/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_docker_linux_${{ matrix.goarch }}.tar
 
-  build-arm-5:
-    needs: get-product-version
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [linux]
-        goarch: [arm]
-        go: ["1.16"]
-        goarm: [5]
-      fail-fast: true
-
-    name: Go ${{ matrix.go }} ${{ matrix.goos }} ${{ matrix.goarch }} build
-
-    env:
-      GOOS: ${{ matrix.goos }}
-      GOARCH: ${{ matrix.goarch }}
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
-
-      - name: Build
-        run: |
-          mkdir dist out
-          go build -o dist/
-          zip -r -j out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}elv5.zip dist/
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}elv5.zip
-          path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}elv5.zip
-
-      - name: Package
-        if: ${{ matrix.goos == 'linux' }}
-        uses: ./.github/actions/package
-        with:
-          name: ${{ github.event.repository.name }}
-          arch: ${{ matrix.goarch }}
-          version: ${{ needs.get-product-version.outputs.product-version }}
-          maintainer: "HashiCorp"
-          homepage: "https://www.hashicorp.com"
-          license: "MIT"
-          binary: "dist/${{ github.event.repository.name }}"
-          deb_depends: "openssl"
-          rpm_depends: "openssl"
-          config_dir: "packaging/linux"
-          preinstall: "packaging/preinstall"
-          postinstall: "packaging/postinstall"
-          preremove: "packaging/preremove"
-          postremove: "packaging/postremove"
-
   build-arm-6:
     needs: get-product-version
     runs-on: ubuntu-latest
@@ -214,7 +160,7 @@ jobs:
         goos: [linux]
         goarch: [arm]
         go: ["1.16"]
-        goarm: [6]
+        goarm: [5, 6]
       fail-fast: true
 
     name: Go ${{ matrix.go }} ${{ matrix.goos }} ${{ matrix.goarch }} ${{ matrix.goarm }} build
@@ -238,6 +184,7 @@ jobs:
           go build -o dist/
           zip -r -j out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}hfv6.zip dist/
       - uses: actions/upload-artifact@v2
+        if: ${{ matrix.goarm == 6 }}
         with:
           name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}hfv6.zip
           path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}hfv6.zip
@@ -262,7 +209,7 @@ jobs:
           postremove: "packaging/postremove"
       
       - name: Docker build
-        if: ${{ matrix.goos == 'linux' }}
+        if: ${{ matrix.goarm == 6 }}
         working-directory: ./packaging/docker
         run: |
           sudo apt-get update
@@ -270,8 +217,15 @@ jobs:
           docker buildx create --use
           cp ../../dist/${{ github.event.repository.name }} ./
           make docker ARCH=${{ matrix.goarch }}
+
       - uses: actions/upload-artifact@v2
-        if: ${{ matrix.goos == 'linux' }}
+        if: ${{ matrix.goarm == 5 }}
+        with:
+          name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}elv5.zip
+          path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}elv5.zip
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.goarm == 6 }}
         with:
           name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_docker_linux_${{ matrix.goarch }}.tar
           path: packaging/docker/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_docker_linux_${{ matrix.goarch }}.tar
