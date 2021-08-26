@@ -202,14 +202,14 @@ jobs:
         run: |
           mkdir dist out
           go build -o dist/
-          zip -r -j out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ FILE_SUFFIX }}.zip dist/
+          zip -r -j out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${FILE_SUFFIX}.zip dist/
 
 
       - uses: actions/upload-artifact@v2
         if: ${{ matrix.goarm == 5 }}
         with:
-          name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ FILE_SUFFIX }}.zip
-          path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ FILE_SUFFIX }}.zip
+          name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${FILE_SUFFIX}.zip
+          path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${FILE_SUFFIX}.zip
 
 
       - name: Package
@@ -233,7 +233,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${{ FILE_SUFFIX }}.deb
+          name: ${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_${FILE_SUFFIX}.deb
           path: out/${{ github.event.repository.name }}_${{ needs.get-product-version.outputs.product-version }}_arm*.deb
       
       - name: Docker build
