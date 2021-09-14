@@ -1,0 +1,128 @@
+# action name
+name: 'build-linux-packages'
+
+# action author
+author: 'Kyle Penfound <kpenfound@hashicorp.com>'
+
+# action description
+description: 'Packages binaries using nfpm.'
+
+# action input values
+inputs:
+  name:
+    description: 'Product name.'
+    default: ''
+    required: true
+  arch:
+    description: 'Build architecture.'
+    default: ''
+    required: true
+  version:
+    description: 'Product semver version.'
+    default: ''
+    required: true
+  maintainer:
+    description: 'Maintainer name.'
+    default: ''
+    required: false
+  description:
+    description: 'Product description.'
+    default: ''
+    required: false
+  homepage:
+    description: 'Product homepage.'
+    default: ''
+    required: false
+  license:
+    description: 'Product license.'
+    default: ''
+    required: false
+  binary:
+    description: 'Binary location to package.'
+    default: ''
+    required: true
+  config_dir:
+    description: 'Directory of configs in desired filesystem structure.'
+    default: ''
+    required: false
+  deb_depends:
+    description: 'Comma separated list of deb dependencies.'
+    default: ''
+    required: false
+  rpm_depends:
+    description: 'Comma separated list of rpm dependencies.'
+    default: ''
+    required: false
+  preinstall:
+    description: 'Preinstall script location.'
+    default: ''
+    required: false
+  postinstall:
+    description: 'Postinstall script location.'
+    default: ''
+    required: false
+  preremove:
+    description: 'Preremove script location.'
+    default: ''
+    required: false
+  postremove:
+    description: 'Postremove script location.'
+    default: ''
+    required: false
+
+# action runner (golang:latest image)
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/download-artifact@v2
+      with:
+        path: dist
+        name: ${{ inputs.name }}_${{ inputs.version }}_linux_${{ inputs.arch }}.zip
+    - name: package
+      shell: bash
+      env:
+        INPUT_NAME: ${{ inputs.name }}
+        INPUT_ARCH: ${{ inputs.arch }}
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_MAINTAINER: ${{ inputs.maintainer }}
+        INPUT_DESCRIPTION: ${{ inputs.description }}
+        INPUT_HOMEPAGE: ${{ inputs.homepage }}
+        INPUT_LICENSE: ${{ inputs.license }}
+        INPUT_RPM_DEPENDS: ${{ inputs.rpm_depends }}
+        INPUT_DEB_DEPENDS: ${{ inputs.deb_depends }}
+        INPUT_BINARY: ${{ inputs.binary }}
+        INPUT_CONFIG_DIR: ${{ inputs.config_dir }}
+        INPUT_PREINSTALL: ${{ inputs.preinstall }}
+        INPUT_POSTINSTALL: ${{ inputs.postinstall }}
+        INPUT_PREREMOVE: ${{ inputs.preremove }}
+        INPUT_POSTREMOVE: ${{ inputs.postremove }}
+        GO111MODULE: on
+        CGO_ENABLED: 0
+      run: |
+        cd ${GITHUB_ACTION_PATH} && go build -o nfpm_template
+        cp nfpm_template /usr/local/bin/nfpm_template
+        cd ../../..
+        chmod +x /usr/local/bin/nfpm_template
+        curl -Lo nfpm.tar.gz https://github.com/goreleaser/nfpm/releases/download/v2.5.1/nfpm_2.5.1_Linux_x86_64.tar.gz \
+        && tar -xf nfpm.tar.gz \
+        && cp nfpm /usr/local/bin/nfpm
+        chmod +x /usr/local/bin/nfpm
+        echo "Creating template files..."
+        echo "$INPUT_RPM_DEPENDS"
+        INPUT_DEPENDS="${{ env.INPUT_RPM_DEPENDS }}" /usr/local/bin/nfpm_template > ./nfpm_rpm_config.yaml
+        INPUT_DEPENDS="${{ env.INPUT_DEB_DEPENDS }}" /usr/local/bin/nfpm_template > ./nfpm_deb_config.yaml
+        echo "Packaging..."
+        ls ${GITHUB_WORKSPACE}/dist
+        unzip -j ${GITHUB_WORKSPACE}/dist/${{ inputs.name }}_${{ inputs.version }}_linux_${{ inputs.arch }}.zip
+        ls ${GITHUB_WORKSPACE}
+        pwd
+        /usr/local/bin/nfpm package -f ./nfpm_rpm_config.yaml -p rpm -t ./out/
+        /usr/local/bin/nfpm package -f ./nfpm_deb_config.yaml -p deb -t ./out/
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.DEB_NAME }}.deb
+        path: out/${{ env.DEB_NAME }}.deb
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.RPM_NAME }}.rpm
+        path: out/${{ env.RPM_NAME }}.rpm

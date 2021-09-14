@@ -1,0 +1,41 @@
+name: 'Build'
+description: 'build go binary'
+inputs:
+   goos:  # id of input
+    description: 'Who to greet'
+    required: true
+   goarch:  # id of input
+    description: 'Who to greet'
+    required: true
+   go-version:  # id of input
+    description: 'Who to greet'
+    required: true
+   product-version:
+    description: 'Who to greet'
+    required: true
+   package-name:
+    description: 'Who to greet'
+    required: true
+
+# outputs:
+#   random-number:
+#     description: "Random number"
+#     value: ${{ steps.random-number-generator.outputs.random-id }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - name: Setup go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ inputs.go-version }}
+    - name: Build
+      shell: bash
+      run: |
+        mkdir dist out
+        go build -o dist/ .
+        zip -r -j out/${{ inputs.package-name }}_${{ inputs.product-version }}_${{ inputs.goos }}_${{ matrix.goarch }}.zip dist/
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ inputs.package-name }}_${{ inputs.product-version }}_${{ inputs.goos }}_${{ inputs.goarch }}.zip
+        path: out/${{ inputs.package-name }}_${{ inputs.product-version }}_${{ inputs.goos }}_${{ inputs.goarch }}.zip
