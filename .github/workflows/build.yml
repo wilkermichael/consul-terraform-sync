@@ -172,7 +172,6 @@ jobs:
       fail-fast: true
 
     name: Build linux package ${{ matrix.goarch }}
-
     steps:
       - uses: actions/checkout@v2
       # download arm/arm64/386/amd64 binaries from build jobs
