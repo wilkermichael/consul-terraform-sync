@@ -124,3 +124,4 @@ runs:
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.RPM_NAME }}.rpm
+        path: ${{ env.RPM_NAME }}.rpm
