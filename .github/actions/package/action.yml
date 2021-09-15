@@ -116,13 +116,11 @@ runs:
         unzip -j ${GITHUB_WORKSPACE}/dist/${{ inputs.name }}_${{ inputs.version }}_linux_${{ inputs.arch }}.zip
         ls ${GITHUB_WORKSPACE}
         pwd
-        /usr/local/bin/nfpm package -f ./nfpm_rpm_config.yaml -p rpm -t ./out/
-        /usr/local/bin/nfpm package -f ./nfpm_deb_config.yaml -p deb -t ./out/
+        /usr/local/bin/nfpm package -f ./nfpm_rpm_config.yaml -p rpm
+        /usr/local/bin/nfpm package -f ./nfpm_deb_config.yaml -p deb
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.DEB_NAME }}.deb
-        path: out/${{ env.DEB_NAME }}.deb
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.RPM_NAME }}.rpm
-        path: out/${{ env.RPM_NAME }}.rpm
