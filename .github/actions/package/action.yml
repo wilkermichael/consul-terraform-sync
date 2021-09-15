@@ -118,8 +118,8 @@ runs:
         pwd
         export RPM_NAME="$(/usr/local/bin/nfpm package -f ./nfpm_rpm_config.yaml -p rpm | grep -o "${{ inputs.name }}.*")"
         export DEB_NAME="$(/usr/local/bin/nfpm package -f ./nfpm_deb_config.yaml -p deb | grep -o "${{ inputs.name }}.*")"
-        echo $RPM_NAME
-        echo $DEB_NAME
+        echo $RPM_NAME >> $GITHUB_ENV
+        echo $DEB_NAME >> $GITHUB_ENV
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.DEB_NAME }}.deb
