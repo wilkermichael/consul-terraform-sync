@@ -122,9 +122,9 @@ runs:
         echo "DEB_NAME=$DEB_NAME" >> $GITHUB_ENV
     - uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.DEB_NAME }}.deb
-        path: ${{ env.DEB_NAME }}.rpm
+        name: ${{ env.DEB_NAME }}
+        path: ${{ env.DEB_NAME }}
     - uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.RPM_NAME }}.rpm
-        path: ${{ env.RPM_NAME }}.rpm
+        name: ${{ env.RPM_NAME }}
+        path: ${{ env.RPM_NAME }}
