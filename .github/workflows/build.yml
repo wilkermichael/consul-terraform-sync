@@ -60,6 +60,7 @@ jobs:
           description: "Consul Terraform Sync is a service-oriented tool for managing network infrastructure near real-time."
           arch: ${{ matrix.goarch }}
           version: "${{ needs.get-product-version.outputs.product-version }}"
+          config_dir: ".release/linux/package"
           maintainer: "HashiCorp"
           homepage: "https://github.com/hashicorp/consul-terraform-sync"
           license: "MPL-2.0"
