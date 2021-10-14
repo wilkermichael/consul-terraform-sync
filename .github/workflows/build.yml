@@ -47,13 +47,14 @@ jobs:
           path: ${{ steps.generate-metadata-file.outputs.filepath }}
 
   set-ld-flags:
+    needs: get-product-version
     runs-on: ubuntu-latest
     steps:
       - name: 'Generate ld flags'
         run: |
             LD_FLAGS= "-s -w \
             -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}' \
-            -X '${{ env.PKG_NAME }}/version.GitCommit="$GITHUB_SHA"' \
+            -X '${{ env.PKG_NAME }}/version.GitCommit=${{ env.GITHUB_SHA }}' \
             -X '${{ env.PKG_NAME }}/version.GitDescribe="${{ needs.get-product-version.outputs.product-version }}"'"
             echo "${LD_FLAGS}" >> "$GITHUB_ENV"
     
