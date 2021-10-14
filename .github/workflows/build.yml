@@ -50,13 +50,15 @@ jobs:
     needs: get-product-version
     runs-on: ubuntu-latest
     steps:
+      - name: 'Checkout directory'
+        uses: actions/checkout@v2
       - name: 'Generate ld flags'
         run: |
-            export LD_FLAGS= -s -w \
+            LD_FLAGS= "-s -w \
             -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}' \
             -X '${{ env.PKG_NAME }}/version.GitCommit=$GITHUB_SHA' \
-            -X '${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}'
-            echo "${LD_FLAGS}" >> "$GITHUB_ENV"
+            -X '${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}'"
+            echo "$LD_FLAGS" >> "$GITHUB_ENV"
     
   build-386:
     needs: [get-product-version, set-ld-flags]
