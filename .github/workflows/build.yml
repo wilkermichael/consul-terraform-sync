@@ -49,15 +49,15 @@ jobs:
   set-ld-flags:
     needs: get-product-version
     runs-on: ubuntu-latest
+    outputs:
+      ldflags: ${{ steps.generate-ld-flags.outputs.ldflags }}
     steps:
       - name: 'Checkout directory'
         uses: actions/checkout@v2
       - name: 'Generate ld flags'
+        id: generate-ld-flags
         run: |
-          echo LD_FLAGS= "-s -w -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}' -X '${{ env.PKG_NAME }}/version.GitCommit=$GITHUB_SHA' -X '${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}'" >> "$GITHUB_ENV"
-      - name: 'Check'
-        run: |
-          echo "${{ env.LD_FLAGS }}"
+          echo "::set-output name=ldflags::"-s -w -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}' -X '${{ env.PKG_NAME }}/version.GitCommit=$GITHUB_SHA' -X '${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}'""
     
   build-386:
     needs: [get-product-version, set-ld-flags]
@@ -85,7 +85,7 @@ jobs:
         run: |
           mkdir dist out
           go build -o dist/ \
-            -ldflags "${{ env.LD_FLAGS }}" \
+            -ldflags "${{ needs.set-ld-flags.outputs.ldflags }}" \
             -tags "${{ env.GO_TAGS }}"
           zip -r -j out/${{ env.PKG_NAME }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip dist/
       - uses: actions/upload-artifact@v2
