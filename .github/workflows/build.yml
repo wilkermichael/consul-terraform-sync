@@ -56,12 +56,12 @@ jobs:
         uses: actions/checkout@v2
       - name: 'Generate ld flags'
         env:
-          GITHUB_SHA: ${{ env.GITHUB_SHA }}
+          GITHUB_SHA: $GITHUB_SHA
         id: generate-ld-flags
         run: >
-          echo "::set-output name=ldflags::"-s -w -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}'
-          -X '${{ env.PKG_NAME }}/version.GitCommit=${{ env.GITHUB_SHA }}'
-          -X '${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}'""
+          echo "::set-output name=ldflags::"-s -w -X \'${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}\'
+          -X \'${{ env.PKG_NAME }}/version.GitCommit=$GITHUB_SHA\'
+          -X \'${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}\'""
     
   build-386:
     needs: [get-product-version, set-ld-flags]
