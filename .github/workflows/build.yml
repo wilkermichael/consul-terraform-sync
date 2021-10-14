@@ -54,10 +54,11 @@ jobs:
         uses: actions/checkout@v2
       - name: 'Generate ld flags'
         run: |
-            LD_FLAGS= "-s -w \
+            export LD_FLAGS= "-s -w \
             -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}' \
             -X '${{ env.PKG_NAME }}/version.GitCommit=$GITHUB_SHA' \
             -X '${{ env.PKG_NAME }}/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}'"
+            echo "$LD_FLAGS" >> "$GITHUB_ENV"
     
   build-386:
     needs: [get-product-version, set-ld-flags]
