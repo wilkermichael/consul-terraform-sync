@@ -1,13 +1,13 @@
 name: build
 
 on:
-  push:
-    # Sequence of patterns matched against refs/heads
-    branches:    
-      # Push events on main branch
-      - main
-      # Push events to branches matching refs/heads/release/**
-      - 'release/**'
+  push
+    # # Sequence of patterns matched against refs/heads
+    # branches:    
+    #   # Push events on main branch
+    #   - main
+    #   # Push events to branches matching refs/heads/release/**
+    #   - 'release/**'
 
 env:
   PKG_NAME: "consul-terraform-sync"
@@ -57,7 +57,7 @@ jobs:
         id: generate-ld-flags
         run: |
           project="$(go list -m)"
-          sha="$GITHUB_SHA"
+          sha="$(git rev-parse --short HEAD)"
           echo "::set-output name=ldflags::"-s -w -X \'$project/version.Name=${{ env.PKG_NAME }}\' \
           -X \'$project/version.GitCommit=$sha\' \
           -X \'$project/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}\'""
