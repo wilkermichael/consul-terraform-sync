@@ -55,6 +55,8 @@ jobs:
       - name: 'Checkout directory'
         uses: actions/checkout@v2
       - name: 'Generate ld flags'
+        env:
+          GITHUB_SHA: ${{ env.GITHUB_SHA }}
         id: generate-ld-flags
         run: >
           echo "::set-output name=ldflags::"-s -w -X '${{ env.PKG_NAME }}/version.Name=${{ env.PKG_NAME }}'
