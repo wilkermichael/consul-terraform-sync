@@ -45,8 +45,20 @@ jobs:
         with:
           name: metadata.json
           path: ${{ steps.generate-metadata-file.outputs.filepath }}
+
+  set-ld-flags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Generate ld flags'
+        run: |
+            LD_FLAGS="-s -w \
+            -X '"${{ env.PKG_NAME }}"/version.Name="${{ env.PKG_NAME }}"' \
+            -X '"${{ env.PKG_NAME }}"/version.GitCommit="${GITHUB_SHA}"' \
+            -X '"${{ env.PKG_NAME }}"/version.GitDescribe="${{ needs.get-product-version.outputs.product-version }}"'"
+            echo "$LD_FLAGS" >> "$GITHUB_ENV"
+    
   build-386:
-    needs: get-product-version
+    needs: [get-product-version, set-ld-flags]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -69,13 +81,9 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: Build
         run: |
-          LD_FLAGS="-s -w \
-            -X '"${{ env.PKG_NAME }}"/version.Name="${{ env.PKG_NAME }}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitCommit="${GITHUB_SHA}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitDescribe="${{ needs.get-product-version.outputs.product-version }}"'
           mkdir dist out
           go build -o dist/ \
-            -ldflags "${LD_FLAGS}" \
+            -ldflags "${{ env.LD_FLAGS }}" \
             -tags "${{ env.GO_TAGS }}""
           zip -r -j out/${{ env.PKG_NAME }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip dist/
       - uses: actions/upload-artifact@v2
@@ -111,7 +119,7 @@ jobs:
           path: out/${{ github.event.repository.name }}-${{ needs.get-product-version.outputs.product-version }}.i386.rpm
 
   build-amd64:
-    needs: get-product-version
+    needs: [get-product-version, set-ld-flags]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -137,13 +145,9 @@ jobs:
 
       - name: Build
         run: |
-          LD_FLAGS="-s -w \
-            -X '"${{ env.PKG_NAME }}"/version.Name="${{ env.PKG_NAME }}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitCommit="${GITHUB_SHA}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitDescribe="${{ needs.get-product-version.outputs.product-version }}"'
           mkdir dist out
           go build -o dist/ \
-            -ldflags "${LD_FLAGS}" \
+            -ldflags "${{ env.LD_FLAGS }}" \
             -tags "${{ env.GO_TAGS }}"
           zip -r -j out/${{ env.PKG_NAME }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip dist/
 
@@ -180,7 +184,7 @@ jobs:
           path: out/${{ github.event.repository.name }}-${{ needs.get-product-version.outputs.product-version }}.x86_64.rpm
 
   build-arm:
-    needs: get-product-version
+    needs: [get-product-version, set-ld-flags]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -206,13 +210,9 @@ jobs:
 
       - name: Build
         run: |
-          LD_FLAGS="-s -w \
-            -X '"${{ env.PKG_NAME }}"/version.Name="${{ env.PKG_NAME }}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitCommit="${GITHUB_SHA}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitDescribe="${{ needs.get-product-version.outputs.product-version }}"'
           mkdir dist out
           go build -o dist/ \
-            -ldflags "${LD_FLAGS}" \
+            -ldflags "${{ env.LD_FLAGS }}" \
             -tags "${{ env.GO_TAGS }}"
           zip -r -j out/${{ env.PKG_NAME }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip dist/
 
@@ -247,7 +247,7 @@ jobs:
           path: out/${{ github.event.repository.name }}-${{ needs.get-product-version.outputs.product-version }}.${{ matrix.goarch }}.rpm
 
   build-arm64:
-    needs: get-product-version
+    needs: [get-product-version, set-ld-flags]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -273,13 +273,9 @@ jobs:
 
       - name: Build
         run: |
-          LD_FLAGS="-s -w \
-            -X '"${{ env.PKG_NAME }}"/version.Name="${{ env.PKG_NAME }}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitCommit="${GITHUB_SHA}"' \
-            -X '"${{ env.PKG_NAME }}"/version.GitDescribe="${{ needs.get-product-version.outputs.product-version }}"'
           mkdir dist out
           go build -o dist/ \
-            -ldflags "${LD_FLAGS}" \
+            -ldflags "${{ env.LD_FLAGS }}" \
             -tags "${{ env.GO_TAGS }}"
           zip -r -j out/${{ env.PKG_NAME }}_${{ needs.get-product-version.outputs.product-version }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip dist/
       - uses: actions/upload-artifact@v2
@@ -315,7 +311,7 @@ jobs:
           path: out/${{ github.event.repository.name }}-${{ needs.get-product-version.outputs.product-version }}.*.rpm
 
   build-darwin:
-    needs: get-product-version
+    needs: [get-product-version, set-ld-flags]
     runs-on: macos-latest
     strategy:
       matrix:
