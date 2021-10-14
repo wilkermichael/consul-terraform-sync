@@ -58,9 +58,9 @@ jobs:
         run: |
           project="$(go list -m)"
           sha="$GITHUB_SHA"
-          echo "::set-output name=ldflags::"-s -w -X \'"$project"/version.Name=${{ env.PKG_NAME }}\' \
-          -X \'"$(go list -m)"/version.GitCommit="$sha"\' \
-          -X \'"$(go list -m)"/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}\'""
+          echo "::set-output name=ldflags::"-s -w -X \'$project/version.Name=${{ env.PKG_NAME }}\' \
+          -X \'$project/version.GitCommit=$sha\' \
+          -X \'$project/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}\'""
     
   build-386:
     needs: [get-product-version, set-ld-flags]
