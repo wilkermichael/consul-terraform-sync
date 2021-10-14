@@ -56,8 +56,10 @@ jobs:
       - name: 'Generate ld flags'
         id: generate-ld-flags
         run: >
-          echo "::set-output name=ldflags::"-s -w -X \'"$(go list -m)"/version.Name=${{ env.PKG_NAME }}\'
-          -X \'"$(go list -m)"/version.GitCommit="$GITHUB_SHA"\'
+          project="$(go list -m)"
+          sha="$GITHUB_SHA"
+          echo "::set-output name=ldflags::"-s -w -X \'$project/version.Name=${{ env.PKG_NAME }}\'
+          -X \'"$(go list -m)"/version.GitCommit=$sha\'
           -X \'"$(go list -m)"/version.GitDescribe=${{ needs.get-product-version.outputs.product-version }}\'""
     
   build-386:
