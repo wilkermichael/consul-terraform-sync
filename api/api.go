@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/hashicorp/consul-terraform-sync/driver"
 	"github.com/hashicorp/consul-terraform-sync/event"
 	"github.com/hashicorp/consul-terraform-sync/logging"
@@ -65,28 +67,36 @@ type API struct {
 
 // NewAPI create a new API object
 func NewAPI(store *event.Store, drivers *driver.Drivers, port int) *API {
-	mux := http.NewServeMux()
+	//mux := http.NewServeMux()
+
+	r := chi.NewRouter()
+
+	// add the middleware, must be done first
+	r.Use(withLogging)
 
 	// retrieve overall status
-	mux.Handle(fmt.Sprintf("/%s/%s", defaultAPIVersion, overallStatusPath),
-		withLogging(newOverallStatusHandler(store, drivers, defaultAPIVersion)))
-	// retrieve task status for a task-name
-	mux.Handle(fmt.Sprintf("/%s/%s/", defaultAPIVersion, taskStatusPath),
-		withLogging(newTaskStatusHandler(store, drivers, defaultAPIVersion)))
+	r.Mount(fmt.Sprintf("/%s/%s", defaultAPIVersion, overallStatusPath),
+		newOverallStatusHandler(store, drivers, defaultAPIVersion))
+
 	// retrieve all task statuses
-	mux.Handle(fmt.Sprintf("/%s/%s", defaultAPIVersion, taskStatusPath),
-		withLogging(newTaskStatusHandler(store, drivers, defaultAPIVersion)))
+	r.Mount(fmt.Sprintf("/%s/%s", defaultAPIVersion, taskStatusPath),
+		newTaskStatusHandler(store, drivers, defaultAPIVersion))
 
 	// crud task
-	mux.Handle(fmt.Sprintf("/%s/%s/", defaultAPIVersion, taskPath),
-		withLogging(newTaskHandler(store, drivers, defaultAPIVersion)))
+	r.Mount(fmt.Sprintf("/%s/%s/", defaultAPIVersion, taskPath),
+		newTaskHandler(store, drivers, defaultAPIVersion))
+
+	petStore := NewPetStore()
+
+	// This is how you set up a basic chi router
+	HandlerFromMux(petStore, r)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      mux,
+		Handler:      r,
 	}
 
 	return &API{
