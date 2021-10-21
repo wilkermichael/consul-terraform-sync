@@ -1,8 +1,8 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Swagger Petstore
-  description: A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
+  title: CTS API
+  description: An api for CTS
   termsOfService: http://swagger.io/terms/
   contact:
     name: Swagger API Team
@@ -12,43 +12,25 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
-  - url: http://petstore.swagger.io/api
+  - url: http://localhost:8558
 paths:
-  /pets:
+  /task:
     get:
-      summary: Returns all pets
+      summary: Returns all tasks
+      operationId: getTasks
+      tags:
+        - task
       description: |
-        Returns all pets from the system that the user has access to
-        Nam sed condimentum est. Maecenas tempor sagittis sapien, nec rhoncus sem sagittis sit amet. Aenean at gravida augue, ac iaculis sem. Curabitur odio lorem, ornare eget elementum nec, cursus id lectus. Duis mi turpis, pulvinar ac eros ac, tincidunt varius justo. In hac habitasse platea dictumst. Integer at adipiscing ante, a sagittis ligula. Aenean pharetra tempor ante molestie imperdiet. Vivamus id aliquam diam. Cras quis velit non tortor eleifend sagittis. Praesent at enim pharetra urna volutpat venenatis eget eget mauris. In eleifend fermentum facilisis. Praesent enim enim, gravida ac sodales sed, placerat id erat. Suspendisse lacus dolor, consectetur non augue vel, vehicula interdum libero. Morbi euismod sagittis libero sed lacinia.
-
-        Sed tempus felis lobortis leo pulvinar rutrum. Nam mattis velit nisl, eu condimentum ligula luctus nec. Phasellus semper velit eget aliquet faucibus. In a mattis elit. Phasellus vel urna viverra, condimentum lorem id, rhoncus nibh. Ut pellentesque posuere elementum. Sed a varius odio. Morbi rhoncus ligula libero, vel eleifend nunc tristique vitae. Fusce et sem dui. Aenean nec scelerisque tortor. Fusce malesuada accumsan magna vel tempus. Quisque mollis felis eu dolor tristique, sit amet auctor felis gravida. Sed libero lorem, molestie sed nisl in, accumsan tempor nisi. Fusce sollicitudin massa ut lacinia mattis. Sed vel eleifend lorem. Pellentesque vitae felis pretium, pulvinar elit eu, euismod sapien.
-      operationId: findPets
-      parameters:
-        - name: tags
-          in: query
-          description: tags to filter by
-          required: false
-          style: form
-          schema:
-            type: array
-            items:
-              type: string
-        - name: limit
-          in: query
-          description: maximum number of results to return
-          required: false
-          schema:
-            type: integer
-            format: int32
+        Returns all tasks
       responses:
         '200':
-          description: pet response
+          description: task response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Pet'
+                  $ref: '#/components/schemas/NewTask'
         default:
           description: unexpected error
           content:
@@ -56,49 +38,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     post:
-      summary: Creates a new pet
-      description: Creates a new pet in the store. Duplicates are allowed
-      operationId: addPet
+      summary: Creates a new task
+      operationId: createTask
+      tags:
+        - task
+      description: |
+        Creates a new task
+      parameters:
+        - name: run
+          in: query
+          description: |
+            different modes for running. Inspect returns a plan and does not commit the task, now runs the task immediately
+          required: false
+          schema:
+            type: string
+            enum: [inspect, now]
       requestBody:
-        description: Pet to add to the store
+        description: Task to add
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewPet'
+              $ref: '#/components/schemas/NewTask'
       responses:
         '200':
-          description: pet response
+          description: task response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pet'
+                $ref: '#/components/schemas/NewTask'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /pets/{id}:
+  /task/{name}:
     get:
-      summary: Returns a pet by ID
-      description: Returns a pet based on a single ID
-      operationId: findPetByID
+      summary: Returns a task by name
+      operationId: getTaskByName
+      tags:
+        - task
+      description: |
+        Returns all tasks
       parameters:
-        - name: id
+        - name: name
           in: path
-          description: ID of pet to fetch
+          description: name of task to retrieve
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            example: "taskA"
       responses:
         '200':
-          description: pet response
+          description: task response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pet'
+                $ref: '#/components/schemas/NewTask'
         default:
           description: unexpected error
           content:
@@ -106,20 +103,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     delete:
-      summary: Deletes a pet by ID
-      description: deletes a single pet based on the ID supplied
-      operationId: deletePet
+      summary: Deletes a task by name
+      operationId: deleteTaskByName
+      description: deletes a single task based on the name provided
+      tags:
+        - task
       parameters:
-        - name: id
+        - name: name
           in: path
-          description: ID of pet to delete
+          description: name of task to delete
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            example: "taskA"
       responses:
         '204':
-          description: pet deleted
+          description: task deleted
         default:
           description: unexpected error
           content:
@@ -128,27 +127,191 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Pet:
-      allOf:
-        - $ref: '#/components/schemas/NewPet'
-        - required:
-            - id
-          properties:
-            id:
-              type: integer
-              format: int64
-              description: Unique id of the pet
+    catalog-services-condition:
+      type: array
+      items:
+        type: object
+        properties:
+          regexp:
+            type: string
+            example: "web.*"
+          namespace:
+            type: string
+            example: "default"
+          node_meta:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              key: value
+          source_includes_var:
+            type: boolean
+            example: false
+    consul-kv-condition:
+      type: array
+      items:
+        type: object
+        properties:
+          path:
+            type: string
+            example: "my-key"
+          recurse:
+            type: boolean
+            example: false
+          datacenter:
+            type: string
+            example: "dc1"
+          namespace:
+            type: string
+            example: "default"
+          source_includes_var:
+            type: boolean
+            example: false
+    schedule-condition:
+      type: array
+      items:
+        type: object
+        properties:
+          cron:
+            type: string
+            example: "* * * * Mon"
 
-    NewPet:
-      required:
-        - name
+    services-condition-source-input:
+      type: array
+      items:
+        type: object
+        properties:
+          regexp:
+            type: string
+            example: "web.*"
+
+    catalog-source-input:
+      type: array
+      items:
+        type: object
+        properties:
+          regexp:
+            type: string
+            example: "web.*"
+          namespace:
+            type: string
+            example: "default"
+          node_meta:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              key: value
+          source_includes_var:
+            type: boolean
+            example: false
+    consul-kv-source-input:
+      type: array
+      items:
+        type: object
+        properties:
+          path:
+            type: string
+            example: "my-key"
+          recurse:
+            type: boolean
+            example: false
+          datacenter:
+            type: string
+            example: "dc1"
+          namespace:
+            type: string
+            example: "default" 
+    
+    NewTask:
+      type: object
       properties:
+        description:
+          type: string
+          example: "an example task"
+        enabled:
+          type: boolean
+          example: true
         name:
           type: string
-          description: Name of the pet
-        tag:
+          example: "taskA"
+        providers:
+          type: array
+          items:
+            type: string
+          example: []
+        services:
+          type: array
+          items:
+            type: string
+            example: ["web", "api"]
+        source:
           type: string
-          description: Type of the pet
+          example: "org/example/module"
+        variable_files:
+          type: array
+          items:
+            type: string
+          example: []
+        version:
+          type: string
+          example: "1.0.0"
+        working_dir:
+          type: string
+          example: "./sync-tasks/task-name"
+        buffer_period:
+          type: array
+          items:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                example: true
+              max:
+                type: string
+                example: "5s"
+              min:
+                type: string
+                example: "20s"
+        condition:
+          type: array
+          items:
+            type: object
+            properties:
+              catalog-services:
+                $ref: '#/components/schemas/catalog-services-condition'
+              services:
+                $ref: '#/components/schemas/services-condition-source-input'              
+              consul-kv:
+                $ref: '#/components/schemas/consul-kv-condition'
+              schedule:
+                $ref: '#/components/schemas/schedule-condition'
+        source_input:
+          type: array
+          items:
+            type: object
+            properties:
+              services:
+                $ref: '#/components/schemas/services-condition-source-input' 
+              consul-kv:
+                $ref: '#/components/schemas/consul-kv-source-input'
+      required:
+        - name
+        - source
+        - version
+      example:
+        catalog-services:
+          regexp: ".*"
+        description: ''
+        enabled: true
+        name: taskA
+        providers: []
+        services:
+        - web
+        - api
+        source: org/example/module
+        variable_files: []
+        version: 1.0.0
 
     Error:
       required:

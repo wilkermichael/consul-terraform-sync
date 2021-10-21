@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
 
 	"github.com/hashicorp/consul-terraform-sync/driver"
@@ -68,7 +69,7 @@ type API struct {
 // NewAPI create a new API object
 func NewAPI(store *event.Store, drivers *driver.Drivers, port int) *API {
 	//mux := http.NewServeMux()
-
+	logger := logging.Global().Named(logSystemName)
 	r := chi.NewRouter()
 
 	// add the middleware, must be done first
@@ -86,10 +87,25 @@ func NewAPI(store *event.Store, drivers *driver.Drivers, port int) *API {
 	r.Mount(fmt.Sprintf("/%s/%s/", defaultAPIVersion, taskPath),
 		newTaskHandler(store, drivers, defaultAPIVersion))
 
-	petStore := NewPetStore()
+	// only want swagger validation for the openapi generated endpoints
+	r.Group(func(r chi.Router) {
+		swagger, err := GetSwagger()
+		if err != nil {
+			logger.Error("Error loading swagger spec", "error", err)
+			panic("this should never error")
+		}
 
-	// This is how you set up a basic chi router
-	HandlerFromMux(petStore, r)
+		// Clear out the servers array in the swagger spec, that skips validating
+		// that server names match. We don't know how this thing will be run.
+		swagger.Servers = nil
+
+		// Use our validation middleware to check all requests against the
+		// OpenAPI schema.
+		r.Use(middleware.OapiRequestValidator(swagger))
+
+		taskHandler := NewTaskHandler()
+		HandlerFromMux(taskHandler, r)
+	})
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),

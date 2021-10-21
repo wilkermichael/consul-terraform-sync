@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -27,53 +28,156 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// NewPet defines model for NewPet.
-type NewPet struct {
-	// Name of the pet
-	Name string `json:"name"`
-
-	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
+// NewTask defines model for NewTask.
+type NewTask struct {
+	BufferPeriod *[]struct {
+		Enabled *bool   `json:"enabled,omitempty"`
+		Max     *string `json:"max,omitempty"`
+		Min     *string `json:"min,omitempty"`
+	} `json:"buffer_period,omitempty"`
+	Condition *[]struct {
+		CatalogServices *CatalogServicesCondition     `json:"catalog-services,omitempty"`
+		ConsulKv        *ConsulKvCondition            `json:"consul-kv,omitempty"`
+		Schedule        *ScheduleCondition            `json:"schedule,omitempty"`
+		Services        *ServicesConditionSourceInput `json:"services,omitempty"`
+	} `json:"condition,omitempty"`
+	Description *string   `json:"description,omitempty"`
+	Enabled     *bool     `json:"enabled,omitempty"`
+	Name        string    `json:"name"`
+	Providers   *[]string `json:"providers,omitempty"`
+	Services    *[]string `json:"services,omitempty"`
+	Source      string    `json:"source"`
+	SourceInput *[]struct {
+		ConsulKv *ConsulKvSourceInput          `json:"consul-kv,omitempty"`
+		Services *ServicesConditionSourceInput `json:"services,omitempty"`
+	} `json:"source_input,omitempty"`
+	VariableFiles *[]string `json:"variable_files,omitempty"`
+	Version       string    `json:"version"`
+	WorkingDir    *string   `json:"working_dir,omitempty"`
 }
 
-// Pet defines model for Pet.
-type Pet struct {
-	// Embedded struct due to allOf(#/components/schemas/NewPet)
-	NewPet `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-	// Unique id of the pet
-	Id int64 `json:"id"`
+// CatalogServicesCondition defines model for catalog-services-condition.
+type CatalogServicesCondition []struct {
+	Namespace         *string                            `json:"namespace,omitempty"`
+	NodeMeta          *CatalogServicesCondition_NodeMeta `json:"node_meta,omitempty"`
+	Regexp            *string                            `json:"regexp,omitempty"`
+	SourceIncludesVar *bool                              `json:"source_includes_var,omitempty"`
 }
 
-// FindPetsParams defines parameters for FindPets.
-type FindPetsParams struct {
-	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
-
-	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
+// CatalogServicesCondition_NodeMeta defines model for CatalogServicesCondition.NodeMeta.
+type CatalogServicesCondition_NodeMeta struct {
+	AdditionalProperties map[string]string `json:"-"`
 }
 
-// AddPetJSONBody defines parameters for AddPet.
-type AddPetJSONBody NewPet
+// ConsulKvCondition defines model for consul-kv-condition.
+type ConsulKvCondition []struct {
+	Datacenter        *string `json:"datacenter,omitempty"`
+	Namespace         *string `json:"namespace,omitempty"`
+	Path              *string `json:"path,omitempty"`
+	Recurse           *bool   `json:"recurse,omitempty"`
+	SourceIncludesVar *bool   `json:"source_includes_var,omitempty"`
+}
 
-// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody AddPetJSONBody
+// ConsulKvSourceInput defines model for consul-kv-source-input.
+type ConsulKvSourceInput []struct {
+	Datacenter *string `json:"datacenter,omitempty"`
+	Namespace  *string `json:"namespace,omitempty"`
+	Path       *string `json:"path,omitempty"`
+	Recurse    *bool   `json:"recurse,omitempty"`
+}
+
+// ScheduleCondition defines model for schedule-condition.
+type ScheduleCondition []struct {
+	Cron *string `json:"cron,omitempty"`
+}
+
+// ServicesConditionSourceInput defines model for services-condition-source-input.
+type ServicesConditionSourceInput []struct {
+	Regexp *string `json:"regexp,omitempty"`
+}
+
+// CreateTaskJSONBody defines parameters for CreateTask.
+type CreateTaskJSONBody NewTask
+
+// CreateTaskParams defines parameters for CreateTask.
+type CreateTaskParams struct {
+	// different modes for running. Inspect returns a plan and does not commit the task, now runs the task immediately
+	Run *CreateTaskParamsRun `json:"run,omitempty"`
+}
+
+// CreateTaskParamsRun defines parameters for CreateTask.
+type CreateTaskParamsRun string
+
+// CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
+type CreateTaskJSONRequestBody CreateTaskJSONBody
+
+// Getter for additional properties for CatalogServicesCondition_NodeMeta. Returns the specified
+// element and whether it was found
+func (a CatalogServicesCondition_NodeMeta) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for CatalogServicesCondition_NodeMeta
+func (a *CatalogServicesCondition_NodeMeta) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for CatalogServicesCondition_NodeMeta to handle AdditionalProperties
+func (a *CatalogServicesCondition_NodeMeta) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for CatalogServicesCondition_NodeMeta to handle AdditionalProperties
+func (a CatalogServicesCondition_NodeMeta) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns all pets
-	// (GET /pets)
-	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
-	// Creates a new pet
-	// (POST /pets)
-	AddPet(w http.ResponseWriter, r *http.Request)
-	// Deletes a pet by ID
-	// (DELETE /pets/{id})
-	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
-	// Returns a pet by ID
-	// (GET /pets/{id})
-	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
+	// Returns all tasks
+	// (GET /task)
+	GetTasks(w http.ResponseWriter, r *http.Request)
+	// Creates a new task
+	// (POST /task)
+	CreateTask(w http.ResponseWriter, r *http.Request, params CreateTaskParams)
+	// Deletes a task by name
+	// (DELETE /task/{name})
+	DeleteTaskByName(w http.ResponseWriter, r *http.Request, name string)
+	// Returns a task by name
+	// (GET /task/{name})
+	GetTaskByName(w http.ResponseWriter, r *http.Request, name string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -84,39 +188,43 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
-// FindPets operation middleware
-func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
+// GetTasks operation middleware
+func (siw *ServerInterfaceWrapper) GetTasks(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTasks(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// CreateTask operation middleware
+func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params FindPetsParams
+	var params CreateTaskParams
 
-	// ------------- Optional query parameter "tags" -------------
-	if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
+	// ------------- Optional query parameter "run" -------------
+	if paramValue := r.URL.Query().Get("run"); paramValue != "" {
 
 	}
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
+	err = runtime.BindQueryParameter("form", true, false, "run", r.URL.Query(), &params.Run)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid format for parameter run: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FindPets(w, r, params)
+		siw.Handler.CreateTask(w, r, params)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -126,38 +234,23 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 	handler(w, r.WithContext(ctx))
 }
 
-// AddPet operation middleware
-func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AddPet(w, r)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
-// DeletePet operation middleware
-func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Request) {
+// DeleteTaskByName operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTaskByName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id int64
+	// ------------- Path parameter "name" -------------
+	var name string
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "name", chi.URLParam(r, "name"), &name)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid format for parameter name: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeletePet(w, r, id)
+		siw.Handler.DeleteTaskByName(w, r, name)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -167,23 +260,23 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 	handler(w, r.WithContext(ctx))
 }
 
-// FindPetByID operation middleware
-func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Request) {
+// GetTaskByName operation middleware
+func (siw *ServerInterfaceWrapper) GetTaskByName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "id" -------------
-	var id int64
+	// ------------- Path parameter "name" -------------
+	var name string
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "name", chi.URLParam(r, "name"), &name)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid format for parameter name: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FindPetByID(w, r, id)
+		siw.Handler.GetTaskByName(w, r, name)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -231,16 +324,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/pets", wrapper.FindPets)
+		r.Get(options.BaseURL+"/task", wrapper.GetTasks)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/pets", wrapper.AddPet)
+		r.Post(options.BaseURL+"/task", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+		r.Delete(options.BaseURL+"/task/{name}", wrapper.DeleteTaskByName)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+		r.Get(options.BaseURL+"/task/{name}", wrapper.GetTaskByName)
 	})
 
 	return r
@@ -249,34 +342,28 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"3d3v/hYAAP//wO3O5VcSAAA=",
+	"H4sIAAAAAAAC/+RY32/bNhD+V4jbngrZStMVKPS0NC2GAFtXLHnrAuMsnmU2EqmSlB2j8P8+HCn/kKXY",
+	"SToUxYYAiS3dHY/f9x15l6+Qm6o2mrR3kH0Fl8+pwvDxvbXG8ofampqsVxQe50YS/5Xkcqtqr4yGLBqL",
+	"8C6BmbEVeshAaf/qHBLwq5riVyrIwjqBipzD4sFAm9dbV+et0gWs1wlY+tIoSxKyT9AuuDG/XSfwgZY3",
+	"6O44Mt1jVZdhkRw9lqYYObILlcedWCrovoYMxi84pW4ekABpnJa8jrcNJaCx4kw8ursLSBiVhZJkHWSf",
+	"bhPYBf4ES5pCAlgr4BemsTk7GlukbUZpZWRTcuYLtIpXmcxUSW2oBVkXk3g5PhufcW5dCqbNbEZ2UpNV",
+	"RvID5alyfaq2G9iDIu6lRXVqTEmoAyF437GD166PfgKV0l2z8zM3yFL7xEw/U+5h9wCtxRV/z42WKoL9",
+	"4AaGWPvZ0gwy+CndCTdtVZse2o92i8QVXVOO7hYnw2wMu/78OtB2wn1jd+D9yD30cx9FCY2Urhv/OHA7",
+	"Wt6nC7VovwgW8hDFT1FNrIn9BTbl0Qu7Vy979qz3Lfk9n8Nt7WO49drF6hbe6WhtZe6nP1ikvUjRcxIJ",
+	"OSLfpwuuS/V3Vs3hYfRsnrYn2D608TAbQHNp7J3SxUQq2/UYp26l8xFLyqX8exT0dupSaI1aenfZ3A5A",
+	"cOTEeJhXXsDVeKgdSTNsSj+0RW0kTSryyB4o4wpYfuyE7Vfi7v66oxVksMCyIRiicnOX7eezpOn4xVH5",
+	"5mUjyU0W2AV+hqUbKPdHnuq9o/NhICV6zEl7OiBe5i8HUXwy7jX6ede4Wo0YywFbS3ljHT0Gie8EYaeC",
+	"/3soPgaMgbv0yHlrD8+cFyL+/GH087qUU+fqw8k8oSJPJ8ImSs9Me6t4zMPSVKEq2apWnrD61S2xKMiO",
+	"lYFtv3odn4mLj1fihrCCBBrLTnPv6yxN93x6TfCFFlgrMTNWXN5cQwKlyklHdtvwFzXmcxLn4WjfBXZZ",
+	"mi6XyzGG12O+Vltfl/5+dfn+w/X70fn4bDz3VRm2S7Zyf86uI9xD2aXBJGX0lA9oXt5c865gsGM2NWlu",
+	"BDJ41d47rOLATLhK+ENBvj+A/EW+sdoJLMvQIrm/WTrMLLLFlYQMfiPPMwZ3vpZcbXhbHOn87GzDEOkQ",
+	"G+u6VHnwTD+7KM94Z3ekc+xq3ww0g6Lo5s75ik1Gkc5Y1E9J6lgucSYcWLnRdF9T7kkKam0ScE1VoV0N",
+	"gco0YhGmpcAGT261cQN8XFpCT06g0LQMzgOERKOb2NHWaLEiH0ezw3BS8exE2ovKSHJB27bRWuliLK60",
+	"400Iu0lX1CVqgVoKacgJbbzITVUpL/w8dtCJ0GbJEdz2kVBVRVKhp3IVcuWZCb40ZFe7srQNv9mhTrqp",
+	"GA0VU2BDsxxoY9e3sdkh598aufrXmN2qrM8tPxfeCJQS9jstHgrW31gBz0zphxV6X619pa+TeASlX1kL",
+	"6yj5kvzAf0Picw7nlC7aoU1M0ZEURgfFcQzRDleyVxjvQgCG8e3qQ+yLj5ZHiGZmcR1vRJtYq+HQCGwl",
+	"3PbZXUF0NH1qKoxi7sjnlz4IIZeYiPyRuH63JSeyshKb8eTwZPvWi+Z53FnyVtHie7L3/y7+LaMnBLFu",
+	"G8sNjZ1+rDQ5lnPjfPbm9es3sL5d/xMAAP//VsYD+qQVAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
