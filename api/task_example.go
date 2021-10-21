@@ -33,8 +33,6 @@ func (t *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Allow CORS here By * or specific origin
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(tasks)
@@ -50,8 +48,6 @@ func (t *TaskHandler) GetTaskByName(w http.ResponseWriter, r *http.Request, name
 		tasks = append(tasks, task)
 	}
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(t.tasks[name])
@@ -68,8 +64,6 @@ func (t *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request, params 
 
 	t.tasks[task.Name] = task
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(task)
@@ -83,7 +77,6 @@ func (t *TaskHandler) DeleteTaskByName(w http.ResponseWriter, r *http.Request, n
 	// delete the task
 	delete(t.tasks, name)
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -74,6 +74,7 @@ func NewAPI(store *event.Store, drivers *driver.Drivers, port int) *API {
 
 	// add the middleware, must be done first
 	r.Use(withLogging)
+	r.Use(withCORS)
 
 	// retrieve overall status
 	r.Mount(fmt.Sprintf("/%s/%s", defaultAPIVersion, overallStatusPath),
