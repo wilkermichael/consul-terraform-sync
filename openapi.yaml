@@ -14,6 +14,34 @@ info:
 servers:
   - url: http://localhost:8558
 paths:
+  /provider:
+    post:
+      summary: Creates a new provider
+      operationId: createProvider
+      tags:
+        - provider
+      description: |
+        Creates a new provider
+      requestBody:
+        description: Task to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewProvider'
+      responses:
+        '200':
+          description: task response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewProvider'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /task:
     get:
       summary: Returns all tasks
@@ -127,6 +155,30 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
+    NewProvider:
+      type: object
+      properties:
+        name:
+          type: string
+          example: aws
+        source:
+          type: string
+          example: hashicorp/aws
+        version:
+          type: string
+          example: 3.56.0
+        terraform_provider:
+          type: array
+          items:
+            $ref: '#/components/schemas/terraform_provider'
+      required:
+      - name
+      - source
+      - version
+    
+    terraform_provider:
+      type: object
+
     catalog-services-condition:
       type: array
       items:
@@ -300,8 +352,9 @@ components:
         - source
         - version
       example:
-        catalog-services:
-          regexp: ".*"
+        condition:
+        - catalog-services:
+          - regexp: ".*"
         description: ''
         enabled: true
         name: taskA

@@ -9,8 +9,9 @@ import (
 )
 
 type TaskHandler struct {
-	tasks map[string]NewTask
-	lock  sync.Mutex
+	tasks     map[string]NewTask
+	providers map[string]NewProvider
+	lock      sync.Mutex
 }
 
 // Make sure we conform to ServerInterface
@@ -18,8 +19,24 @@ var _ ServerInterface = (*TaskHandler)(nil)
 
 func NewTaskHandler() *TaskHandler {
 	return &TaskHandler{
-		tasks: make(map[string]NewTask),
+		tasks:     make(map[string]NewTask),
+		providers: make(map[string]NewProvider),
 	}
+}
+
+func (t *TaskHandler) CreateProvider(w http.ResponseWriter, r *http.Request) {
+	// We expect a NewPet object in the request body.
+	var provider NewProvider
+	if err := json.NewDecoder(r.Body).Decode(&provider); err != nil {
+		sendTaskError(w, http.StatusBadRequest, "Invalid format for NewPet")
+		return
+	}
+
+	t.providers[provider.Name] = provider
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(provider)
 }
 
 // GetTasks returns all tasks
