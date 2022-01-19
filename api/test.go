@@ -68,7 +68,6 @@ func configureCTS(t *testing.T, scheme string, configPath string, tlsConfig TLSC
 	require.NoError(t, err)
 
 	clientConfig := ClientConfig{
-		Port:      port,
 		Addr:      fmt.Sprintf("%s://localhost:%d", scheme, port),
 		TLSConfig: tlsConfig,
 	}

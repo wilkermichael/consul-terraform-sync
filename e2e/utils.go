@@ -238,16 +238,15 @@ func ctsSetupTLS(t *testing.T, srv *testutil.TestServer, tempDir string, taskCon
 
 // eventCount returns number of events that are stored for a given task by
 // querying the Task Status API. Note: events have a storage limit (currently 5)
-func eventCount(t *testing.T, taskName string, port int) int {
-	events := events(t, taskName, port)
+func eventCount(t *testing.T, taskName string, addr string) int {
+	events := events(t, taskName, addr)
 	return len(events)
 }
 
 // events returns the events that are stored for a given task by querying the
 // Task Status API. Note: events have a storage limit (currently 5)
-func events(t *testing.T, taskName string, port int) []event.Event {
-	u := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s?include=events",
-		port, "v1", taskName)
+func events(t *testing.T, taskName string, addr string) []event.Event {
+	u := fmt.Sprintf("%s/%s/status/tasks/%s?include=events", addr, "v1", taskName)
 	resp := testutils.RequestHTTP(t, http.MethodGet, u, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)

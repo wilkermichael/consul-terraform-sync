@@ -197,7 +197,7 @@ func TestCondition_CatalogServices_Regexp(t *testing.T) {
 	//    (one new event) and its data exists in catalog_service.
 
 	// 0. Confirm only one event. Confirm empty var catalog_services
-	eventCountBase := eventCount(t, taskName, cts.Port())
+	eventCountBase := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, 1, eventCountBase)
 
 	workingDir := fmt.Sprintf("%s/%s", tempDir, taskName)
@@ -208,7 +208,7 @@ func TestCondition_CatalogServices_Regexp(t *testing.T) {
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	time.Sleep(defaultWaitForNoEvent)
 
-	eventCountNow := eventCount(t, taskName, cts.Port())
+	eventCountNow := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, eventCountBase, eventCountNow,
 		"change in event count. task was unexpectedly triggered")
 
@@ -222,7 +222,7 @@ func TestCondition_CatalogServices_Regexp(t *testing.T) {
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	api.WaitForEvent(t, cts, taskName, now, defaultWaitForEvent)
 
-	eventCountNow = eventCount(t, taskName, cts.Port())
+	eventCountNow = eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, eventCountBase+1, eventCountNow,
 		"event count did not increment once. task was not triggered as expected")
 
@@ -373,7 +373,7 @@ func testCatalogServicesNoServicesTrigger(t *testing.T, taskConf, taskName, temp
 	//    db and api-2 (now) rendered in tfvars
 
 	// 0. Confirm one event. Confirm initial api service registration data
-	eventCountBase := eventCount(t, taskName, cts.Port())
+	eventCountBase := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, 1, eventCountBase)
 
 	workingDir := filepath.Join(tempDir, taskName)
@@ -386,7 +386,7 @@ func testCatalogServicesNoServicesTrigger(t *testing.T, taskConf, taskName, temp
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	time.Sleep(defaultWaitForNoEvent)
 
-	eventCountNow := eventCount(t, taskName, cts.Port())
+	eventCountNow := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, eventCountBase, eventCountNow,
 		"change in event count. task was unexpectedly triggered")
 
@@ -399,7 +399,7 @@ func testCatalogServicesNoServicesTrigger(t *testing.T, taskConf, taskName, temp
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	api.WaitForEvent(t, cts, taskName, now, defaultWaitForEvent)
 
-	eventCountNow = eventCount(t, taskName, cts.Port())
+	eventCountNow = eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, eventCountBase+1, eventCountNow,
 		"event count did not increment once. task was not triggered as expected")
 
@@ -431,7 +431,7 @@ func testCatalogServicesNoTagsTrigger(t *testing.T, taskConf, taskName, tempDirN
 	//    and api-2 data is in tfvars
 
 	// 0. Confirm one event. Confirm tag data in resource
-	eventCountBase := eventCount(t, taskName, cts.Port())
+	eventCountBase := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, 1, eventCountBase)
 
 	workingDir := filepath.Join(tempDir, taskName)
@@ -445,7 +445,7 @@ func testCatalogServicesNoTagsTrigger(t *testing.T, taskConf, taskName, tempDirN
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	time.Sleep(defaultWaitForNoEvent)
 
-	eventCountNow := eventCount(t, taskName, cts.Port())
+	eventCountNow := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, eventCountBase, eventCountNow,
 		"change in event count. task was unexpectedly triggered")
 
@@ -458,7 +458,7 @@ func testCatalogServicesNoTagsTrigger(t *testing.T, taskConf, taskName, tempDirN
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	api.WaitForEvent(t, cts, taskName, now, defaultWaitForEvent)
 
-	eventCountNow = eventCount(t, taskName, cts.Port())
+	eventCountNow = eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, eventCountBase+1, eventCountNow,
 		"event count did not increment once. task was not triggered as expected")
 

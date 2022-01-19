@@ -133,7 +133,7 @@ func TestE2E_StatusEndpoints(t *testing.T) {
 
 	for _, tc := range taskCases {
 		t.Run(tc.name, func(t *testing.T) {
-			u := fmt.Sprintf("http://localhost:%d/%s/%s", cts.Port(), "v1", tc.path)
+			u := fmt.Sprintf("%s/%s/%s", cts.FullAddress(), "v1", tc.path)
 			resp := testutils.RequestHTTP(t, http.MethodGet, u, "")
 			defer resp.Body.Close()
 
@@ -187,7 +187,7 @@ func TestE2E_StatusEndpoints(t *testing.T) {
 
 	for _, tc := range eventCases {
 		t.Run(tc.name, func(t *testing.T) {
-			u := fmt.Sprintf("http://localhost:%d/%s/%s", cts.Port(), "v1", tc.path)
+			u := fmt.Sprintf("%s/%s/%s", cts.FullAddress(), "v1", tc.path)
 			resp := testutils.RequestHTTP(t, http.MethodGet, u, "")
 			defer resp.Body.Close()
 
@@ -223,7 +223,7 @@ func TestE2E_StatusEndpoints(t *testing.T) {
 
 	for _, tc := range overallCases {
 		t.Run(tc.name, func(t *testing.T) {
-			u := fmt.Sprintf("http://localhost:%d/%s/%s", cts.Port(), "v1", tc.path)
+			u := fmt.Sprintf("%s/%s/%s", cts.FullAddress(), "v1", tc.path)
 			resp := testutils.RequestHTTP(t, http.MethodGet, u, "")
 			defer resp.Body.Close()
 
@@ -281,8 +281,7 @@ func TestE2E_TaskEndpoints_UpdateEnableDisable(t *testing.T) {
 	testutils.CheckDir(t, false, resourcesPath)
 
 	// Update Task API: enable task with inspect run option
-	baseUrl := fmt.Sprintf("http://localhost:%d/%s/tasks/%s",
-		cts.Port(), "v1", disabledTaskName)
+	baseUrl := fmt.Sprintf("%s/%s/tasks/%s", cts.FullAddress(), "v1", disabledTaskName)
 	u := fmt.Sprintf("%s?run=inspect", baseUrl)
 	resp := testutils.RequestHTTP(t, http.MethodPatch, u, `{"enabled":true}`)
 	defer resp.Body.Close()
@@ -359,14 +358,13 @@ func TestE2E_TaskEndpoints_Delete(t *testing.T) {
 		moduleTaskConfig(taskName, "./test_modules/local_instances_file"))
 
 	// Delete task
-	u := fmt.Sprintf("http://localhost:%d/%s/tasks/%s", cts.Port(), "v1", taskName)
+	u := fmt.Sprintf("%s/%s/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp := testutils.RequestHTTP(t, http.MethodDelete, u, "")
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Check that the task no longer exists
-	s := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s",
-		cts.Port(), "v1", taskName)
+	s := fmt.Sprintf("%s/%s/status/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp = testutils.RequestHTTP(t, http.MethodGet, s, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -422,7 +420,7 @@ func TestE2E_TaskEndpoints_Delete_Conflict(t *testing.T) {
 
 	// Attempt to delete the task while running, expect failure
 	time.Sleep(2 * time.Second) // task completion is delayed by 5s
-	u := fmt.Sprintf("http://localhost:%d/%s/tasks/%s", cts.Port(), "v1", taskName)
+	u := fmt.Sprintf("%s/%s/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp := testutils.RequestHTTP(t, http.MethodDelete, u, "")
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusConflict, resp.StatusCode)
@@ -438,7 +436,7 @@ func TestE2E_TaskEndpoints_Delete_Conflict(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Check that the task no longer exists
-	s := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s", cts.Port(), "v1", taskName)
+	s := fmt.Sprintf("%s/%s/status/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp = testutils.RequestHTTP(t, http.MethodGet, s, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -478,7 +476,7 @@ func TestE2E_TaskEndpoints_Create(t *testing.T) {
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 
 	// Create task
-	u := fmt.Sprintf("http://localhost:%d/v1/tasks", cts.Port())
+	u := fmt.Sprintf("%s/v1/tasks", cts.FullAddress())
 
 	createTaskRequest := fmt.Sprintf(createTestTaskTemplate, taskName, serviceName)
 
@@ -489,7 +487,7 @@ func TestE2E_TaskEndpoints_Create(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.StatusCode, "response body %s", string(bodyBytes))
 
 	// Check that the task has been created
-	s := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s", cts.Port(), "v1", taskName)
+	s := fmt.Sprintf("%s/%s/status/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp = testutils.RequestHTTP(t, http.MethodGet, s, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -505,7 +503,7 @@ func TestE2E_TaskEndpoints_Create(t *testing.T) {
 	assert.Equal(t, "unknown", task.Status)
 
 	// Check no events stored
-	e := eventCount(t, taskName, cts.Port())
+	e := eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, 0, e)
 
 	// Verify that the task did not run
@@ -522,7 +520,7 @@ func TestE2E_TaskEndpoints_Create(t *testing.T) {
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	api.WaitForEvent(t, cts, taskName, time.Now(), defaultWaitForEvent)
 
-	e = eventCount(t, taskName, cts.Port())
+	e = eventCount(t, taskName, cts.FullAddress())
 	require.Equal(t, 1, e, "event is only tracked when the task runs")
 
 	resourcesPath = filepath.Join(tempDir, taskName, resourcesDir)
@@ -562,7 +560,7 @@ func TestE2E_TaskEndpoints_Create_Run_Now(t *testing.T) {
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 
 	// Create task
-	u := fmt.Sprintf("http://localhost:%d/v1/tasks", cts.Port())
+	u := fmt.Sprintf("%s/v1/tasks", cts.FullAddress())
 	u = fmt.Sprintf("%s?run=now", u)
 
 	createTaskRequest := fmt.Sprintf(createTestTaskTemplate, taskName, serviceName)
@@ -574,13 +572,13 @@ func TestE2E_TaskEndpoints_Create_Run_Now(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.StatusCode, "response body %s", string(bodyBytes))
 
 	// Check that the task has been created
-	s := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s", cts.Port(), "v1", taskName)
+	s := fmt.Sprintf("%s/%s/status/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp = testutils.RequestHTTP(t, http.MethodGet, s, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Verify that the task did run and only a single event was stored
-	e := events(t, taskName, cts.Port())
+	e := events(t, taskName, cts.FullAddress())
 	require.Equal(t, 1, len(e))
 	resourcesPath := filepath.Join(tempDir, taskName, resourcesDir)
 	validateServices(t, true, []string{service.ID}, resourcesPath)
@@ -606,7 +604,7 @@ func TestE2E_TaskEndpoints_InvalidSchema(t *testing.T) {
 		moduleTaskConfig(initialTaskName, "./test_modules/local_instances_file"))
 
 	// Create a task with invalid source field (boolean instead of string)
-	u := fmt.Sprintf("http://localhost:%d/v1/tasks", cts.Port())
+	u := fmt.Sprintf("%s/v1/tasks", cts.FullAddress())
 
 	taskName := "created-task"
 	badRequest := fmt.Sprintf(`{
@@ -636,7 +634,7 @@ func TestE2E_TaskEndpoints_InvalidSchema(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	// Check that the task has not been created
-	s := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s", cts.Port(), "v1", taskName)
+	s := fmt.Sprintf("%s/%s/status/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp = testutils.RequestHTTP(t, http.MethodGet, s, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -662,7 +660,7 @@ func TestE2E_TaskEndpoints_DryRunTaskCreate(t *testing.T) {
 		moduleTaskConfig(initialTaskName, "mkam/hello/cts"))
 
 	// Create a dry run task
-	u := fmt.Sprintf("http://localhost:%d/v1/tasks?run=inspect", cts.Port())
+	u := fmt.Sprintf("%s/v1/tasks?run=inspect", cts.FullAddress())
 	taskName := "dryrun_task"
 	serviceName := "api"
 	req := &oapigen.TaskRequest{
@@ -694,7 +692,7 @@ func TestE2E_TaskEndpoints_DryRunTaskCreate(t *testing.T) {
 	assert.ElementsMatch(t, *req.Services, *r.Task.Services, "services not expected value")
 
 	// Check that the task was not created
-	s := fmt.Sprintf("http://localhost:%d/%s/status/tasks/%s", cts.Port(), "v1", taskName)
+	s := fmt.Sprintf("%s/%s/status/tasks/%s", cts.FullAddress(), "v1", taskName)
 	resp = testutils.RequestHTTP(t, http.MethodGet, s, "")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)

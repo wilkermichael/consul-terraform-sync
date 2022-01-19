@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/consul-terraform-sync/config"
 	"github.com/hashicorp/go-rootcerts"
 )
 
@@ -42,7 +41,6 @@ type httpClient interface {
 
 // Client to make api requests
 type Client struct {
-	port    int // remain for backwards compatibility but prefer addr
 	addr    string
 	version string
 	scheme  string
@@ -51,10 +49,8 @@ type Client struct {
 
 // ClientConfig configures the client to make api requests
 type ClientConfig struct {
-	Port   int // Stay for now for backwards compatibility, but prefer Addr
-	Addr   string
-	Scheme string
-
+	Addr      string
+	Scheme    string
 	TLSConfig TLSConfig
 }
 
@@ -75,7 +71,6 @@ type addressComposite struct {
 // DefaultClientConfig returns a default configuration for the client
 func DefaultClientConfig() *ClientConfig {
 	c := &ClientConfig{
-		Port: config.DefaultPort,
 		Addr: DefaultAddress,
 		TLSConfig: TLSConfig{
 			SSLVerify: true,
@@ -132,7 +127,6 @@ func NewClient(c *ClientConfig, httpClient httpClient) (*Client, error) {
 	}
 
 	return &Client{
-		port:    c.Port,
 		addr:    ac.address,
 		version: defaultAPIVersion,
 		scheme:  ac.scheme,
@@ -170,11 +164,6 @@ func setupTLSConfig(c *ClientConfig) (*tls.Config, error) {
 	}
 
 	return tlsClientConfig, nil
-}
-
-// Port returns the port being used by the client
-func (c *Client) Port() int {
-	return c.port
 }
 
 // FullAddress returns the client address including the scheme. eg. http://localhost:8558
@@ -228,25 +217,11 @@ func (c *Client) WaitForAPI(timeout time.Duration) error {
 // path: relative path with no preceding '/' e.g. "status/tasks"
 // query: URL encoded query string with no preceding '?'. See QueryParam.Encode()
 func (c *Client) request(method, path, query, body string) (*http.Response, error) {
-	var serverURL url.URL
-
-	// If port is default, use the address variable instead
-	if c.port == config.DefaultPort {
-		serverURL = url.URL{
-			Scheme:   c.scheme,
-			Host:     c.addr,
-			Path:     fmt.Sprintf("%s/%s", c.version, path),
-			RawQuery: query,
-		}
-	} else {
-		// If port is set, assume using old arguments and append port to localhost
-		// assume http scheme
-		serverURL = url.URL{
-			Scheme:   c.scheme,
-			Host:     fmt.Sprintf("localhost:%d", c.port),
-			Path:     fmt.Sprintf("%s/%s", c.version, path),
-			RawQuery: query,
-		}
+	serverURL := url.URL{
+		Scheme:   c.scheme,
+		Host:     c.addr,
+		Path:     fmt.Sprintf("%s/%s", c.version, path),
+		RawQuery: query,
 	}
 
 	r := strings.NewReader(body)

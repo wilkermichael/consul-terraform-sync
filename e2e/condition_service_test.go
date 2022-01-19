@@ -111,7 +111,7 @@ func TestCondition_Services(t *testing.T) {
 			//    task was not triggered and the data is not in the services variable.
 
 			// 0. Confirm only one event. Confirm empty var catalog_services
-			eventCountExpected := eventCount(t, tc.taskName, cts.Port())
+			eventCountExpected := eventCount(t, tc.taskName, cts.FullAddress())
 			require.Equal(t, 1, eventCountExpected)
 
 			workingDir := fmt.Sprintf("%s/%s", tempDir, tc.taskName)
@@ -122,7 +122,7 @@ func TestCondition_Services(t *testing.T) {
 			testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 			time.Sleep(defaultWaitForNoEvent)
 
-			eventCountNow := eventCount(t, tc.taskName, cts.Port())
+			eventCountNow := eventCount(t, tc.taskName, cts.FullAddress())
 			require.Equal(t, eventCountExpected, eventCountNow,
 				"change in event count. task was unexpectedly triggered")
 
@@ -133,7 +133,7 @@ func TestCondition_Services(t *testing.T) {
 			service = testutil.TestService{ID: "api-web-1", Name: "api-web"}
 			testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 			api.WaitForEvent(t, cts, tc.taskName, now, defaultWaitForEvent)
-			eventCountNow = eventCount(t, tc.taskName, cts.Port())
+			eventCountNow = eventCount(t, tc.taskName, cts.FullAddress())
 			eventCountExpected++
 			require.Equal(t, eventCountExpected, eventCountNow,
 				"event count did not increment once. task was not triggered as expected")
@@ -146,7 +146,7 @@ func TestCondition_Services(t *testing.T) {
 			service = testutil.TestService{ID: "api-web-2", Name: "api-web"}
 			testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 			api.WaitForEvent(t, cts, tc.taskName, now, defaultWaitForEvent)
-			eventCountNow = eventCount(t, tc.taskName, cts.Port())
+			eventCountNow = eventCount(t, tc.taskName, cts.FullAddress())
 			eventCountExpected++
 			require.Equal(t, eventCountExpected, eventCountNow,
 				"event count did not increment once. task was not triggered as expected")
@@ -157,7 +157,7 @@ func TestCondition_Services(t *testing.T) {
 			service = testutil.TestService{ID: "api-web-3", Name: "api-web", Tags: []string{"tag_a"}}
 			testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 			time.Sleep(defaultWaitForNoEvent)
-			eventCountNow = eventCount(t, tc.taskName, cts.Port())
+			eventCountNow = eventCount(t, tc.taskName, cts.FullAddress())
 			require.Equal(t, eventCountExpected, eventCountNow,
 				"change in event count. task was unexpectedly triggered")
 			validateServices(t, false, []string{"api-web-3"}, resourcesPath)

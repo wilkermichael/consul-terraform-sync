@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/consul-terraform-sync/api"
-	"github.com/hashicorp/consul-terraform-sync/config"
 	"github.com/mitchellh/cli"
 	"github.com/mitchellh/go-wordwrap"
 )
@@ -37,7 +36,6 @@ type tls struct {
 
 const (
 	// Command line flag names
-	FlagPort     = "port"
 	FlagHTTPAddr = "http-addr"
 
 	FlagCAPath     = "ca-path"
@@ -53,8 +51,6 @@ func (m *meta) defaultFlagSet(name string) *flag.FlagSet {
 	m.flags = flag.NewFlagSet(name, flag.ContinueOnError)
 
 	// Values provide both default values, and documentation for the default value when -help is used
-	m.port = m.flags.Int(FlagPort, config.DefaultPort,
-		fmt.Sprintf("The port to use for the Consul-Terraform-Sync API server, it is preferred to use the %s field instead", FlagHTTPAddr))
 	m.addr = m.flags.String(FlagHTTPAddr, api.DefaultAddress, fmt.Sprintf("The `address` and port of the CTS daemon. The value can be an IP "+
 		"address or DNS address, but it must also include the port. This can "+
 		"also be specified via the %s environment variable. The "+
@@ -125,9 +121,7 @@ func (m *meta) oneArgCheck(name string, args []string) bool {
 func (m *meta) clientConfig() *api.ClientConfig {
 	// Let the Client determine its default first, then override with command flag values
 	c := api.DefaultClientConfig()
-	if m.isFlagParsedAndFound(FlagPort) {
-		c.Port = *m.port
-	}
+
 	if m.isFlagParsedAndFound(FlagHTTPAddr) {
 		c.Addr = *m.addr
 	}

@@ -71,12 +71,12 @@ func TestE2E_MetaCommandErrors(t *testing.T) {
 		},
 		{
 			"non-existing task",
-			[]string{fmt.Sprintf("-port=%d", cts.Port()), "non-existent-task"},
+			[]string{fmt.Sprintf("-%s=%s", command.FlagHTTPAddr, cts.FullAddress()), "non-existent-task"},
 			"does not exist or has not been initialized yet",
 		},
 		{
 			"out of order arguments",
-			[]string{fakeFailureTaskName, fmt.Sprintf("-port %d", cts.Port())},
+			[]string{fakeFailureTaskName, fmt.Sprintf("-%s=%s", command.FlagHTTPAddr, cts.FullAddress())},
 			"All flags are required to appear before positional arguments",
 		},
 	}
@@ -144,7 +144,6 @@ func TestE2E_EnableTaskCommand(t *testing.T) {
 			cts := ctsSetup(t, srv, tempDir, disabledTaskConfig(tempDir))
 
 			subcmd := []string{"task", "enable",
-				fmt.Sprintf("-%s=%d", command.FlagPort, cts.Port()),
 				fmt.Sprintf("-%s=%s", command.FlagHTTPAddr, cts.FullAddress()),
 			}
 			subcmd = append(subcmd, tc.args...)
@@ -181,7 +180,7 @@ func TestE2E_DisableTaskCommand(t *testing.T) {
 	}{
 		{
 			"happy path",
-			[]string{fmt.Sprintf("-port=%d", cts.Port()), dbTaskName},
+			[]string{fmt.Sprintf("-%s=%s", command.FlagHTTPAddr, cts.FullAddress()), dbTaskName},
 			"disable complete!",
 		},
 	}
@@ -237,16 +236,16 @@ func TestE2E_ReenableTaskTriggers(t *testing.T) {
 	//    (one new event)
 
 	// 0. disable then re-enable the task
-	subcmd := []string{"task", "disable", fmt.Sprintf("-port=%d", cts.Port()), dbTaskName}
+	subcmd := []string{"task", "disable", fmt.Sprintf("-%s=%s", command.FlagHTTPAddr, cts.FullAddress()), dbTaskName}
 	output, err := runSubcommand(t, "", subcmd...)
 	assert.NoError(t, err, output)
 
-	subcmd = []string{"task", "enable", fmt.Sprintf("-port=%d", cts.Port()), dbTaskName}
+	subcmd = []string{"task", "enable", fmt.Sprintf("-%s=%s", command.FlagHTTPAddr, cts.FullAddress()), dbTaskName}
 	output, err = runSubcommand(t, "yes\n", subcmd...)
 	assert.NoError(t, err, output)
 
 	// 1. get current number of events
-	eventCountBase := eventCount(t, dbTaskName, cts.Port())
+	eventCountBase := eventCount(t, dbTaskName, cts.FullAddress())
 
 	// 2. register api service. check triggers task
 	now := time.Now()
@@ -254,7 +253,7 @@ func TestE2E_ReenableTaskTriggers(t *testing.T) {
 	testutils.RegisterConsulService(t, srv, service, defaultWaitForRegistration)
 	api.WaitForEvent(t, cts, dbTaskName, now, defaultWaitForEvent)
 
-	eventCountNow := eventCount(t, dbTaskName, cts.Port())
+	eventCountNow := eventCount(t, dbTaskName, cts.FullAddress())
 	require.Equal(t, eventCountBase+1, eventCountNow,
 		"event count did not increment once. task was not triggered as expected")
 }

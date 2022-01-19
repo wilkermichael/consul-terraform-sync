@@ -132,12 +132,11 @@ func TestCondition_Schedule_Basic(t *testing.T) {
 			// 2. Register multiple services and confirm that task is only triggered at
 			//    scheduled time. Check resources are created.
 
-			port := cts.Port()
 			taskSchedule := 10 * time.Second
 			scheduledWait := taskSchedule + 5*time.Second // buffer for task to execute
 
 			// 0. Confirm one event for once-mode
-			eventCountBase := eventCount(t, taskName, port)
+			eventCountBase := eventCount(t, taskName, cts.FullAddress())
 			assert.Equal(t, 1, eventCountBase)
 
 			// 1. Wait and confirm that the task was triggered at the scheduled time
@@ -147,10 +146,10 @@ func TestCondition_Schedule_Basic(t *testing.T) {
 			beforeEvent := time.Now()
 			api.WaitForEvent(t, cts, taskName, beforeEvent, scheduledWait)
 
-			eventCountNow := eventCount(t, taskName, port)
+			eventCountNow := eventCount(t, taskName, cts.FullAddress())
 			assert.Equal(t, eventCountNow, eventCountBase+1)
 
-			e := events(t, taskName, port)
+			e := events(t, taskName, cts.FullAddress())
 			latestStartTime := e[0].StartTime.Round(time.Second)
 			assert.Equal(t, 0, latestStartTime.Second()%10, fmt.Sprintf("expected "+
 				"start time to be at the 10s mark but was at %s", latestStartTime))
@@ -166,7 +165,7 @@ func TestCondition_Schedule_Basic(t *testing.T) {
 
 			// check scheduled task did not trigger immediately and ran only on schedule
 			api.WaitForEvent(t, cts, taskName, registerTime, scheduledWait)
-			checkScheduledRun(t, taskName, registerTime, taskSchedule, port)
+			checkScheduledRun(t, taskName, registerTime, taskSchedule, cts.FullAddress())
 
 			// confirm service resources created
 			resourcesPath := filepath.Join(tempDir, taskName, resourcesDir)
@@ -188,7 +187,7 @@ func TestCondition_Schedule_Basic(t *testing.T) {
 
 				// check scheduled task did not trigger immediately and ran only on schedule
 				api.WaitForEvent(t, cts, taskName, registerTime, scheduledWait)
-				checkScheduledRun(t, taskName, registerTime, taskSchedule, port)
+				checkScheduledRun(t, taskName, registerTime, taskSchedule, cts.FullAddress())
 
 				// confirm key-value resources created, and that the values are as expected
 				validateModuleFile(t, true, true, resourcesPath, "key-path", expectedKV)
@@ -245,13 +244,12 @@ func TestCondition_Schedule_Dynamic(t *testing.T) {
 	//     - Dynamic task: triggered immediately
 	//     - Scheduled task: run on schedule
 
-	port := cts.Port()
 	scheduledWait := taskSchedule + 5*time.Second // buffer for task to execute
 
 	// 0. Confirm one event for once-mode
-	schedEventCount := eventCount(t, schedTaskName, port)
+	schedEventCount := eventCount(t, schedTaskName, cts.FullAddress())
 	require.Equal(t, 1, schedEventCount)
-	dynaEventCounter := eventCount(t, dbTaskName, port)
+	dynaEventCounter := eventCount(t, dbTaskName, cts.FullAddress())
 	require.Equal(t, 1, dynaEventCounter)
 
 	// 1. test registering a service only monitored by dynamic task
@@ -265,13 +263,13 @@ func TestCondition_Schedule_Dynamic(t *testing.T) {
 	// confirm dynamic task triggered
 	api.WaitForEvent(t, cts, dbTaskName, registrationTime, defaultWaitForEvent)
 	dynaEventCounter++
-	dynaEventCountNow := eventCount(t, dbTaskName, port)
+	dynaEventCountNow := eventCount(t, dbTaskName, cts.FullAddress())
 	require.Equal(t, dynaEventCounter, dynaEventCountNow,
 		"dynamic task event should have been incremented")
 
 	// check scheduled task didn't trigger immediately and ran on schedule
 	api.WaitForEvent(t, cts, schedTaskName, registrationTime, scheduledWait)
-	checkScheduledRun(t, schedTaskName, registrationTime, taskSchedule, port)
+	checkScheduledRun(t, schedTaskName, registrationTime, taskSchedule, cts.FullAddress())
 
 	// 2. test registering a service only monitored by scheduled task
 
@@ -283,10 +281,10 @@ func TestCondition_Schedule_Dynamic(t *testing.T) {
 
 	// check scheduled task didn't trigger immediately and ran on schedule
 	api.WaitForEvent(t, cts, schedTaskName, registrationTime, scheduledWait)
-	checkScheduledRun(t, schedTaskName, registrationTime, taskSchedule, port)
+	checkScheduledRun(t, schedTaskName, registrationTime, taskSchedule, cts.FullAddress())
 
 	// confirm that dynamic task has not triggered by now
-	dynaEventCountNow = eventCount(t, dbTaskName, port)
+	dynaEventCountNow = eventCount(t, dbTaskName, cts.FullAddress())
 	require.Equal(t, dynaEventCounter, dynaEventCountNow,
 		"dynamic event count unexpectedly changed")
 
@@ -301,21 +299,21 @@ func TestCondition_Schedule_Dynamic(t *testing.T) {
 	// confirm dynamic task triggered
 	api.WaitForEvent(t, cts, dbTaskName, registrationTime, defaultWaitForEvent)
 	dynaEventCounter++
-	dynaEventCountNow = eventCount(t, dbTaskName, port)
+	dynaEventCountNow = eventCount(t, dbTaskName, cts.FullAddress())
 	require.Equal(t, dynaEventCounter, dynaEventCountNow,
 		"dynamic task event should have been incremented")
 
 	// check scheduled task didn't trigger immediately and ran on schedule
 	api.WaitForEvent(t, cts, schedTaskName, registrationTime, scheduledWait)
-	checkScheduledRun(t, schedTaskName, registrationTime, taskSchedule, port)
+	checkScheduledRun(t, schedTaskName, registrationTime, taskSchedule, cts.FullAddress())
 }
 
 // checkScheduledRun checks that a scheduled task's most recent task run
 // occurred at approximately the expected scheduled time by checking events
 func checkScheduledRun(t *testing.T, taskName string, depChangeTime time.Time,
-	taskSchedule time.Duration, port int) {
+	taskSchedule time.Duration, addr string) {
 
-	e := events(t, taskName, port)
+	e := events(t, taskName, addr)
 	require.GreaterOrEqual(t, len(e), 2, "expect at least two events. cannot "+
 		"use this check for first event. first event is from once-mode which "+
 		"calls task on demand, not on schedule")
